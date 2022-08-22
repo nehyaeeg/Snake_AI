@@ -1,0 +1,10 @@
+Your loss means exactly this: for one batch,
+ it is the mean-squared error between your 
+model's prediction for time t from its sole
+ Q-Value approximation and its prediction 
+for time t from its Q-Value approximation 
+for the next state(t+1) and taking into account
+ some "ground truth" from the environment, 
+that is the reward (r) for this timestep
+
+Qt vs r + Qt+1
