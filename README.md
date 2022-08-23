@@ -6,3 +6,5 @@ of the food relative to the current location of the snake.
 A deep Q network is trained using torch.NN and rssults are displayed.
 
 The books, articles, and images in the resource folder explain the underlying mathematical formulas at play.
+
+<img src="sample.mp4" style="float: left; margin-right: 10px;" />
