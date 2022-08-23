@@ -1,11 +1,9 @@
-from ast import While
 from collections import namedtuple
-from ctypes.wintypes import POINT
 from enum import Enum
 import pygame
 import random
-pygame.init()
 
+#GLOBALS
 BLOCK_WIDTH = 20
 FRAME_RATE = 20
 
@@ -27,7 +25,7 @@ class Direction(Enum):
     UP = 3
     DOWN = 4
     
-
+pygame.init()
 #class implementing the game environemt
 class SnakeGame:
     
@@ -48,9 +46,9 @@ class SnakeGame:
                            Point(self.snake_head.x - BLOCK_WIDTH,self.snake_head.y), # first left square
                            Point(self.snake_head.x - 2*BLOCK_WIDTH,self.snake_head.y)] # second left square
         self.score = 0
-        self.isOver = False
+        self.isOver = False # termianl case reached or not
         self.food = self.__random_food()
-        self.game_iter = 0 # number of iteration in the current episode
+        self.game_iter = 0 # number of iteration(moves) in the current episode
         
         
     #randomly place food, excludes edges
@@ -58,6 +56,8 @@ class SnakeGame:
         
         food = Point(random.randint(0, ((self.w - BLOCK_WIDTH) //BLOCK_WIDTH ))* BLOCK_WIDTH, #x
                      random.randint(0, ((self.h - BLOCK_WIDTH) //BLOCK_WIDTH ))* BLOCK_WIDTH) #y
+        
+        #if collides with body try again
         if food in self.snake_body:
             return self.__random_food()
         
@@ -65,6 +65,7 @@ class SnakeGame:
             return food
         
     #main play function causing snake to move
+    # action comes from agent
     def play(self,action):
         self.game_iter += 1
         
@@ -74,7 +75,7 @@ class SnakeGame:
                 pygame.quit()
                 quit()
                         
-        # move snake based on action given
+        # move snake based on action given anc collect reward
         reward = self.__move_head(action)         
         self.__update_screen()
         self.clock.tick(FRAME_RATE)
@@ -109,10 +110,10 @@ class SnakeGame:
             
         p = Point(x,y) # new head
             
-        #termination case borders or collide with self
-        if self.collision():
+        #termination case borders or collide with self or lingering without accomplishemnt
+        if self.collision(p):
             self.isOver = True
-            return -10
+            return -10 # reward
             
         self.snake_body.insert(0,p) #insert at front
         self.snake_head = p # update head           
@@ -121,16 +122,18 @@ class SnakeGame:
             self.score += 1
             self.food = self.__random_food() # renew food
             self.__update_screen()
-            return 10
+            return 10 # reward
             
         else:
             self.snake_body.pop() # remove last one, indicating movement
             return 0
             
     # check for termination
-    def collision(self, point:POINT):
-        if point.x<0 or point.x> self.w - BLOCK_WIDTH or point.y<0 or point.y> self.h - BLOCK_WIDTH or point in self.snake_body or self.game_iter > 100 * len(self.snake_body):
+    def collision(self, point:Point):
+        if point.x<0 or point.x> self.w - BLOCK_WIDTH or point.y<0 or point.y> self.h - BLOCK_WIDTH or point in self.snake_body or self.game_iter > 100 * len(self.snake_body): # last element is to prevent lingering without achievement
             return True
+        
+        return False
             
         
         
@@ -140,30 +143,9 @@ class SnakeGame:
         self.window.fill(BLACK)
         for item in self.snake_body:
             pygame.draw.rect(self.window, WHITE, pygame.Rect(item.x, item.y, BLOCK_WIDTH, BLOCK_WIDTH)) # draw each block
-            pygame.draw.rect(self.window, BLACK, pygame.Rect(item.x, item.y, 1, BLOCK_WIDTH)) # draw lines separating squares
-            pygame.draw.rect(self.window, BLACK, pygame.Rect(item.x, item.y, BLOCK_WIDTH, 1)) # draw lines separating squares
+            pygame.draw.rect(self.window, BLACK, pygame.Rect(item.x, item.y, 1, BLOCK_WIDTH)) # draw lines separating squares vertical
+            pygame.draw.rect(self.window, BLACK, pygame.Rect(item.x, item.y, BLOCK_WIDTH, 1)) # draw lines separating squares horizontal
         pygame.draw.rect(self.window, RED, pygame.Rect(self.food.x, self.food.y, BLOCK_WIDTH, BLOCK_WIDTH)) # draw food
         text = font.render(f"Score: {self.score}",True,WHITE) #show text score
         self.window.blit(text,(self.w //2 -18, 0))
-        pygame.display.flip()       
-        
-        
-
-# #Main function for the game
-# def main():
-#     width = 600
-#     height = 400
-#     game = SnakeGame(width,height)
-    
-#     while(True):
-#         game.play()
-#         if game.isOver:
-#             break
-        
-#     print(f"Your Score is {game.score}.")
-#     pygame.quit()
-    
-
-# #run as main 
-# if __name__ == "__main__":
-#     main()
+        pygame.display.flip()
