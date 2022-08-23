@@ -36,8 +36,6 @@ class Q_training:
         self.optimizer = optim.Adam(self.model.parameters(), lr) # adam for SGD 
         self.loss = nn.MSELoss() # (Qt-Q)**2
         
-        
-        
     def train_step(self,state,action, reward, new_state, isOver):
         state = torch.tensor(state, dtype=torch.float)
         new_state = torch.tensor(new_state, dtype=torch.float)
