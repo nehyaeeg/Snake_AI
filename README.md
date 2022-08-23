@@ -11,4 +11,6 @@ The books, articles, and images in the resource folder explain the underlying ma
 
 ***Reinforcement learning is implemented using Pytorch.
 
+<img src="sample2.gif" style="float: left; margin-right: 10px;" />
+
 <img src="sample.gif" style="float: left; margin-right: 10px;" />
