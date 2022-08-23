@@ -14,7 +14,7 @@ class Agent:
     
     def __init__(self):
         self.mem = deque(maxlen= MEMORY_SIZE) # for replay
-        self.e = 0 # epsilon for randomness
+        self.e = 0 # epsilon for randomness, will be assigned later on
         self.number_of_games = 0 # total games played
         self.gamma = 0.9 # discount rate
         self.model = Qnet(11,256,3) # 11 in, 256, hidden, 3:out
@@ -23,12 +23,11 @@ class Agent:
     
     def get_state(self, game:SnakeGame) -> list:
         
-        # state: danger straight0, right1, left2, dir left3, right4, up 5, down6, food left7, right9, up9 down10
+        # state: danger straight0, right1, left2, dir left3, right4, up 5, down6, food left7, right8, up9 down10
         state = np.zeros(11, dtype=int)
         
         dir = game.direction
-        food = game.food
-        
+                
         # position of the head of the snake
         x= game.snake_head.x 
         y= game.snake_head.y
@@ -70,7 +69,7 @@ class Agent:
             
             if game.collision(Point(x+BLOCK_WIDTH,y)): # danger right
                 state[1] = 1
-            if game.collision(Point(x,y+BLOCK_WIDTH)): # danger straight
+            if game.collision(Point(x,y-BLOCK_WIDTH)): # danger straight
                 state[0] = 1
             if game.collision(Point(x-BLOCK_WIDTH,y)): # danger left
                 state[2] = 1
@@ -101,13 +100,13 @@ class Agent:
     def train_1(self):
         
         if len(self.mem) > BATCH_SIZE: # if more than needed, select a sample
-            sample = random.sample(self.mem, BATCH_SIZE) # take a sampel of batchsize
+            sample = random.sample(self.mem, BATCH_SIZE) # take a sample of batchsize
         else:
             sample = self.mem # whole memory
 
         
-        states,actions, rewards, new_states, isOvers = zip(*sample) # unpack anf group
-        self.trainer.train_step(states,actions, rewards, new_states, isOvers) # train on all random elements
+        states,actions, rewards, new_states, isOvers = zip(*sample) # unpack and group
+        self.trainer.train_step(states,actions, rewards, new_states, isOvers) # train on all samples elements
     
     #for short-term predictor
     def traint_2(self,state,action, reward, new_state, isOver):
@@ -122,16 +121,14 @@ class Agent:
             index = random.randint(0,2)
             action[index] = 1
             
+        # use prediction
         else:
-            state_input = torch.tensor(state, dtype=float) # convert state to tensor to input to model
-            high_index = torch.argmax( self.model(state_input)).item() # index of highest  in action vector
+            state_input = torch.tensor(state, dtype=torch.float) # convert state to tensor to input to model
+            high_index = torch.argmax( self.model(state_input)).item() # index of highest  in action vector //uses Qnet model for a forward iteration
             action[high_index] = 1 # set which action to take
             
         return action
             
-
-
-
 
 # global
 def train():
@@ -145,26 +142,22 @@ def train():
     
     while True:
         
-        state = agent.get_state(game)
+        state = agent.get_state(game) # current state
         action = agent.get_action(state)
-        score, isOver, reward = game.play(action)
-        new_state = agent.get_state(game)
+        score, isOver, reward = game.play(action) # goes to next state/ Adds to game.iteration
+        new_state = agent.get_state(game) # retain state_new
         agent.store_mem(state,action, reward, new_state, isOver)
         agent.traint_2(state,action, reward, new_state, isOver)
         
-        if isOver:
+        if isOver: # after each episode is over, target network is trained again
             agent.number_of_games += 1
             
             agent.train_1() # train by experiecne replay of the whole episode
             #plot
-            
-            
             game.reset_game()
             if score > record:
                 record = score
                 agent.model.save()
-                
-                
             print(f"Game Number : {agent.number_of_games}, Score: {score}, Current Highest Record: {record}")
         
         
