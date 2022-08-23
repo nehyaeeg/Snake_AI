@@ -5,8 +5,6 @@ from collections import deque
 import matplotlib as mp
 import random
 from rl_model import Q_training, Qnet
-from plotter import plot
-
 MEMORY_SIZE = 10000 # FOR limtiing memory emphasizing newer experiences
 BATCH_SIZE = 1000 # for SGD
 ALPHA = 0.001 # learning rate for NN
