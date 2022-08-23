@@ -6,17 +6,18 @@ import os
 
 
 class Qnet(nn.Module):
-    def __init__(self, input_len, hidden_layer_len, output_len):
+    def __init__(self, input_len, hidden_layer_len, output_len): # variabels are dims 
         super().__init__()
         self.linear_layer1 = nn.Linear(input_len, hidden_layer_len) # for linear transformation from input to hidden layer
         self.linear_layer2 = nn.Linear(hidden_layer_len,output_len) # for linear transformation from hidden layer to output layer
         
-    
+    # forward iteration transformation
     def forward(self,input):
         input = F.relu(self.linear_layer1(input))
-        output = self.linear_layer2(input) # try softmax
+        output = self.linear_layer2(input) # no softmax, will ruin Q values as probabilities(should be able to go above 1)
         return output
-    
+
+    # save a good modelif it breaks record
     def save(self, file_name="model.pth"):
         folder_path = "./model"
         if not os.path.exists(folder_path):
@@ -32,7 +33,7 @@ class Q_training:
         self.model = model
         self.lr = lr
         self.gamma = gamma
-        self.optimizer = optim.Adam(model.parameters(), lr) # SGD 
+        self.optimizer = optim.Adam(self.model.parameters(), lr) # adam for SGD 
         self.loss = nn.MSELoss() # (Qt-Q)**2
         
         
