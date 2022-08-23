@@ -5,6 +5,7 @@ from collections import deque
 import matplotlib as mp
 import random
 from rl_model import Q_training, Qnet
+from plotter import plot
 
 MEMORY_SIZE = 10000 # FOR limtiing memory emphasizing newer experiences
 BATCH_SIZE = 1000 # for SGD
@@ -21,10 +22,10 @@ class Agent:
         self.trainer = Q_training(self.model, ALPHA, self.gamma)
         
     
-    def get_state(self, game:SnakeGame) -> list:
+    def get_state(self, game:SnakeGame):
         
         # state: danger straight0, right1, left2, dir left3, right4, up 5, down6, food left7, right8, up9 down10
-        state = np.zeros(11, dtype=int)
+        state = [0] * 11
         
         dir = game.direction
                 
@@ -78,22 +79,27 @@ class Agent:
         # food location
         
         # left or right
-        if x - game.food.x <=0 :
+        if x - game.food.x < 0 : # right
             state[8] = 1
-        else:
+        if x - game.food.x > 0: # left
             state[7] = 1
             
         # up or down
-        if y - game.food.y <=0 :
+        if y - game.food.y < 0 : # down
             state[10] = 1
-        else:
+        if y - game.food.y > 0: # up
             state[9] = 1
-                
-        return state
+        
+        
+        return np.array(state, dtype=int)
+    
+    
+    
+        
         
     
     def store_mem(self, state, action, reward, new_state, isOver):
-        self.mem.append(np.array([state,action, reward, new_state, isOver]))
+        self.mem.append((state,action, reward, new_state, isOver))
         
     
     # for target network: Experience replay
@@ -112,6 +118,8 @@ class Agent:
     def traint_2(self,state,action, reward, new_state, isOver):
         self.trainer.train_step(state,action, reward, new_state, isOver) # train with each step taken
     
+    
+    # convert raw output of Qnet(model) to a 0,1 vector for action determination
     def get_action(self, state):
         action = [0,0,0]
         self.e = 90 - self.number_of_games # as games progress and learns, less random action
@@ -132,11 +140,7 @@ class Agent:
 
 # global
 def train():
-    plot_scores = []
-    plot_mean_scores = []
-    total_score = 0
     record = 0 # highest score
-    
     agent = Agent()
     game = SnakeGame()
     

@@ -12,10 +12,11 @@ class Qnet(nn.Module):
         self.linear_layer2 = nn.Linear(hidden_layer_len,output_len) # for linear transformation from hidden layer to output layer
         
     # forward iteration transformation
-    def forward(self,input):
-        input = F.relu(self.linear_layer1(input))
-        output = self.linear_layer2(input) # no softmax, will ruin Q values as probabilities(should be able to go above 1)
-        return output
+    # input is the state
+    def forward(self,state): 
+        hidden = F.relu(self.linear_layer1(state))
+        output = self.linear_layer2(hidden) # no softmax, will ruin Q values as probabilities(should be able to go above 1)
+        return output # action vector
 
     # save a good modelif it breaks record
     def save(self, file_name="model.pth"):
@@ -42,7 +43,7 @@ class Q_training:
         action = torch.tensor(action, dtype=torch.long)
         reward = torch.tensor(reward, dtype=torch.float)
         
-        
+        # if 1 sample is inputted
         if len(state.shape) == 1:
             state = torch.unsqueeze(state, 0)
             new_state = torch.unsqueeze(new_state, 0)
@@ -51,5 +52,19 @@ class Q_training:
             isOver = (isOver, )
             
             
-        prediction = self.model(state)
+        Q = self.model(state) # raw action vector not converted to 0,1. Shows Q values
+        new_Q = Q.clone()
         
+        for index in range(len(state)):
+            # if a terminal case
+            if isOver[index]:
+                temp = reward[index]
+            else:
+                temp = reward[index] + torch.max(self.model(new_state[index])) # reward  + max Q_new value(which must be predicted again)
+                
+            new_Q[index][torch.argmax(action[index]).item()] = temp # correct the  entry reflecting max Q, the rest statys the same to not affect loss/learnring
+        
+        self.optimizer.zero_grad() # zero out gradient to prevent accum
+        loss = self.loss(new_Q, Q) # inout for loss
+        loss.backward() # get gradeints of loss wrt model.parameters 
+        self.optimizer.step() # update the 

@@ -2,6 +2,7 @@ from collections import namedtuple
 from enum import Enum
 import pygame
 import random
+pygame.init()
 
 #GLOBALS
 BLOCK_WIDTH = 20
@@ -13,7 +14,7 @@ WHITE = (255,255,255)
 BLUE = (0, 0, 255)
 RED = (200,0,0)
 
-font  = pygame.font.SysFont("Aria", 23)
+font  = pygame.font.Font("times-new-roman.ttf", 23)
 
 #coordiantes
 Point = namedtuple("Point",["x","y"])
@@ -25,7 +26,7 @@ class Direction(Enum):
     UP = 3
     DOWN = 4
     
-pygame.init()
+
 #class implementing the game environemt
 class SnakeGame:
     
